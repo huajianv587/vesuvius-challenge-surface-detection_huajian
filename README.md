@@ -1,180 +1,125 @@
-# 🏆 Vesuvius Challenge - Surface Detection — Bronze Medal, Rank 85/1,391
+# Vesuvius Challenge – Surface Detection
 
 <p align="center">
-  <a href="https://img.shields.io/badge/Kaggle-Competition-20BEFF?logo=kaggle&logoColor=white&style=flat-square"><img src="https://img.shields.io/badge/Kaggle-Competition-20BEFF?logo=kaggle&logoColor=white&style=flat-square" alt="Kaggle competition" /></a>
-  <a href="https://img.shields.io/badge/Award-Bronze%20%7C%2085%2F1391-CD7F32?style=flat-square"><img src="https://img.shields.io/badge/Award-Bronze%20%7C%2085%2F1391-CD7F32?style=flat-square" alt="Bronze medal, rank 85 of 1391" /></a>
-  <a href="https://img.shields.io/badge/Metric-Official%20leaderboard%20score-555555?style=flat-square"><img src="https://img.shields.io/badge/Metric-Official%20leaderboard%20score-555555?style=flat-square" alt="Official leaderboard score" /></a>
-  <a href="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white&style=flat-square"><img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white&style=flat-square" alt="Python 3.11" /></a>
-  <a href="https://img.shields.io/badge/Stack-nnUNet%20%7C%20PyTorch-EE4C2C?logo=pytorch&logoColor=white&style=flat-square"><img src="https://img.shields.io/badge/Stack-nnUNet%20%7C%20PyTorch-EE4C2C?logo=pytorch&logoColor=white&style=flat-square" alt="nnUNet and PyTorch" /></a>
-  <a href="https://img.shields.io/badge/License-Not%20specified-lightgrey?style=flat-square"><img src="https://img.shields.io/badge/License-Not%20specified-lightgrey?style=flat-square" alt="License not specified" /></a>
+  <a href="https://www.kaggle.com/competitions/vesuvius-challenge-surface-detection"><img src="https://img.shields.io/badge/Kaggle-Competition-20BEFF?logo=kaggle&logoColor=white&style=flat-square" alt="Kaggle competition" /></a>
+  <a href="https://storage.googleapis.com/kaggle-competition-certificates/31156518/532b9eb8ee7083b247b4da26621806d6.png"><img src="https://img.shields.io/badge/Award-Bronze%20%7C%2085%2F1391-CD7F32?style=flat-square" alt="Bronze Medal, rank 85 of 1,391" /></a>
+  <img src="https://img.shields.io/badge/Metric-Leaderboard%20score-555555?style=flat-square" alt="Leaderboard score" />
+  <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white&style=flat-square" alt="Python 3.11" />
+  <img src="https://img.shields.io/badge/Stack-nnUNet%20%7C%20PyTorch-EE4C2C?logo=pytorch&logoColor=white&style=flat-square" alt="nnUNet and PyTorch" />
+  <img src="https://img.shields.io/badge/License-Unspecified-lightgrey?style=flat-square" alt="License unspecified" />
 </p>
 
 <p align="center"><b>English</b> | <a href="./README_zh.md">简体中文</a></p>
 
 <div align="center">
   <a href="https://storage.googleapis.com/kaggle-competition-certificates/31156518/532b9eb8ee7083b247b4da26621806d6.png">
-    <img src="assets/certificate.png" alt="Official Kaggle Vesuvius Challenge - Surface Detection certificate" width="700" />
+    <img src="assets/certificate.png" alt="Official Vesuvius Challenge - Surface Detection certificate" width="700" />
   </a>
-  <p><em>🏅 Official Kaggle Competition Award Certificate — Bronze Medal, 85th of 1,391 teams</em></p>
+  <p><em>Official Kaggle award certificate — Bronze Medal, rank 85 of 1,391 teams</em></p>
 </div>
 
-## 1. Executive Summary
+## Overview
 
-This repository preserves a Kaggle Notebook for **Vesuvius Challenge - Surface Detection**. The code builds a 3D nnUNet dataset from TIFF volumes, optionally reuses a prepared preprocessed dataset, trains or attaches an nnUNet checkpoint, runs full-resolution inference with saved probability maps, refines the surface mask, and packages the resulting TIFF files into `submission.zip`.
+This repository preserves the archived Kaggle notebook for **Vesuvius Challenge – Surface Detection**. The pipeline converts volumetric TIFF data into an nnUNet dataset, optionally reuses prepared preprocessing artifacts, runs full-resolution inference from a prepared checkpoint, refines the surface probability map, and packages the resulting masks into `submission.zip`.
 
-The tracked Notebook keeps its source cells and runtime metadata; generated cell outputs are intentionally stripped to keep the repository reviewable and avoid storing transient 3D visualizations or logs.
+### Highlights
 
-### Problem and Core Challenges
+- **3D segmentation:** `3d_fullres` nnUNet pipeline with `nnUNetPlannerResEncM` and `nnUNetResEncUNetMPlans`.
+- **Memory-aware data handling:** symlinked raw volumes and optional reuse of prepared preprocessing artifacts.
+- **Checkpoint-based inference:** archived final path uses `fold_all/checkpoint_best.pth` from the 2,000-epoch trainer tree.
+- **Mask refinement:** class-1 probability extraction, hysteresis propagation, anisotropic closing, and connected-component filtering.
+- **Award evidence:** Bronze Medal, rank 85 of 1,391 teams; archived certificate and official links are under `evidence/`.
 
-- **Task:** 3D voxel segmentation of a surface class from volumetric TIFF inputs.
-- **Input format:** `train_images/*.tif`, `train_labels/*.tif`, and `test_images/*.tif` under the Kaggle competition directory.
-- **Label contract:** background `0`, surface `1`, ignore `2`.
-- **Systems constraints:** 3D volumes are large, so the pipeline uses symlinks, optional prepared preprocessing, configurable workers, and persisted nnUNet results.
-- **Official metric:** the exact metric definition is not encoded in the archived Notebook; `[TODO: record the official Vesuvius metric definition]`.
+The final archived notebook performs inference from a supplied checkpoint. It contains wrappers for dataset preparation and training, but the checked-in final path does not include a complete fold-wise CV ledger or a fresh training run.
 
-### Winning Approach Overview
-
-The pipeline uses `3d_fullres` with `nnUNetPlannerResEncM` and `nnUNetResEncUNetMPlans`. The final Notebook invocation skips preprocessing and training, attaches a `checkpoint_best.pth` from a prepared `nnUNetTrainer_2000epochs` result tree, and performs inference with probability saving enabled. A custom post-processing stage extracts the surface probability channel, uses hysteresis propagation from strong seeds through a weak region, applies anisotropic morphological closing, removes small components, and writes uint8 TIFF masks before zipping them.
-
-## 2. Solution Architecture and Pipeline
+## Architecture
 
 ```mermaid
 graph TD
     A[Competition TIFF volumes] --> B[Prepare nnUNet raw dataset]
-    B --> C[imagesTr / labelsTr / JSON sidecars]
+    B --> C[imagesTr / labelsTr / dataset.json]
     C --> D{Prepared preprocessing available?}
-    D -->|yes| E[Copy metadata + symlink NPZ/B2ND]
-    D -->|no| F[nnUNetv2_plan_and_preprocess]
-    E --> G[nnUNet training or external checkpoint]
+    D -->|yes| E[Reuse metadata and symlink arrays]
+    D -->|no| F[nnUNet plan and preprocess]
+    E --> G[Train or attach checkpoint]
     F --> G
-    G --> H[nnUNetv2_predict\n3d_fullres, fold=all]
+    G --> H[nnUNet full-resolution inference]
     H --> I[Probability maps .npz]
-    I --> J[Surface channel + argmax anchor]
+    I --> J[Surface probability channel]
     J --> K[Hysteresis propagation]
-    K --> L[Anisotropic closing\nZ radius 3, XY radius 2]
-    L --> M[Remove components < 250 voxels]
+    K --> L[Anisotropic closing]
+    L --> M[Remove small components]
     M --> N[uint8 prediction TIFFs]
     N --> O[submission.zip]
 ```
 
-### Pipeline Stages
+## Technical Implementation
 
-1. **Environment:** set `nnUNet_raw`, `nnUNet_preprocessed`, `nnUNet_results`, `nnUNet_compile`, and `nnUNet_USE_BLOSC2=1`.
-2. **Raw conversion:** create `Dataset100_VesuviusSurface`, use symlinks for input TIFFs, write JSON spacing sidecars, and generate a `dataset.json` with `SimpleTiffIO`.
-3. **Preprocessing:** reuse `/kaggle/input/vesuvius-surface-nnunet-preprocessed` when available; otherwise run the nnUNet planner/preprocessor.
-4. **Training or checkpoint mapping:** train a selected fold or map an external `.pth` file to `checkpoint_final.pth` so nnUNet can discover it.
-5. **Inference:** prepare test TIFFs as `_0000.tif`, run `nnUNetv2_predict` with `--save_probabilities`, and retain `.npz` maps for post-processing.
-6. **Mask refinement and packaging:** refine class-1 probabilities, write TIFF masks, and zip only the filenames at the archive root.
+### Dataset preparation
 
-## 3. Key Technical Insights
+The notebook expects `train_images/*.tif`, `train_labels/*.tif`, and `test_images/*.tif`. It creates `Dataset100_VesuviusSurface`, maps images to nnUNet's `_0000.tif` convention, writes JSON spacing sidecars, and declares `background=0`, `surface=1`, and `ignore=2` in `dataset.json`. Raw files are symlinked by default to avoid duplicating large volumes.
 
-### 3.1 Validation Strategy
+When `/kaggle/input/vesuvius-surface-nnunet-preprocessed` is available, metadata is copied while large `.npz`, `.npy`, and `.b2nd` artifacts are symlinked. Otherwise, the notebook runs the nnUNet planner and preprocessor.
 
-The code supports two fold modes:
+### Model and inference configuration
 
-- `FOLD=0..4` for five-fold validation or fold-level ensembling;
-- `FOLD="all"` for full-data training and final inference.
-
-The archived final cell uses `fold="all"`, `do_preprocess=False`, and `do_train=False`, so the checked-in Notebook does **not** contain a complete five-fold CV result table. It performs single-model inference from the supplied external checkpoint. `[TODO: add fold-wise CV scores if those experiments are available]`.
-
-### 3.2 Data Preparation and Representation
-
-- The input contract is `train_images`, `train_labels`, and `test_images` directories of TIFF volumes.
-- Training images are mapped to nnUNet's `imagesTr/{case}_0000.tif`; labels become `labelsTr/{case}.tif`.
-- JSON sidecars store isotropic spacing `[1.0, 1.0, 1.0]`.
-- `dataset.json` declares one channel named `CT`, labels `background=0`, `surface=1`, `ignore=2`, and `overwrite_image_reader_writer="SimpleTiffIO"`.
-- Raw files are symlinked by default to avoid duplicating large volumes.
-- Preprocessed metadata files are copied, while heavy `.npz`, `.npy`, and `.b2nd` files are symlinked when a prepared dataset is available.
-
-### 3.3 Model Design and Training Configuration
-
-The model is delegated to nnUNet rather than implemented as a custom PyTorch class:
-
-| Component | Code-backed setting |
+| Component | Archived setting |
 | --- | --- |
-| Framework | `nnunetv2` with PyTorch underneath |
-| Dataset ID | `100` (`Dataset100_VesuviusSurface`) |
+| Framework | `nnunetv2` with PyTorch |
+| Dataset | `Dataset100_VesuviusSurface` |
 | Configuration | `3d_fullres` |
 | Planner | `nnUNetPlannerResEncM` |
 | Plans | `nnUNetResEncUNetMPlans` |
-| Default fold | `all` |
-| Default epoch mapping | `EPOCHS=None` maps to `nnUNetTrainer` (the helper treats this as 1,000 epochs) |
-| Final archived checkpoint | `nnUNetTrainer_2000epochs__nnUNetResEncUNetMPlans__3d_fullres/fold_all/checkpoint_best.pth` |
-| GPU selection | `torch.cuda.device_count()` with automatic `-num_gpus` when greater than one |
+| Final fold | `all` |
+| Final checkpoint | `fold_all/checkpoint_best.pth` in the 2,000-epoch trainer tree |
+| Final mode | `do_preprocess=False`, `do_train=False` |
 
-There is no custom Loss, optimizer, scheduler, EMA, AMP block, pseudo-labeling, or neural-network head in the archived code; those behaviors are supplied by the nnUNet runtime.
+The repository does not define a custom neural-network class, custom loss, optimizer, scheduler, EMA, AMP block, pseudo-labeling method, or custom head; those behaviors are provided by the nnUNet runtime.
 
-### 3.4 Inference and Post-processing
+### Post-processing
 
-The post-processing implementation is explicit and reproducible:
+The final mask refinement is explicit:
 
 1. Load `probabilities` from each nnUNet `.npz` file.
-2. Use class channel `1` as the surface probability map.
-3. Build an anchor mask from `argmax(probabilities) != 0`.
-4. Mark strong seeds with `probability >= 0.8`.
-5. Allow propagation through `probability >= 0.25` or the anchor mask.
-6. Propagate with a full 3D connectivity structure.
-7. Apply a custom anisotropic kernel with `radius_z=3` and `radius_xy=2`.
-8. Remove connected components smaller than `250` voxels.
-9. Save the result as `uint8` TIFF.
+2. Use channel `1` as the surface probability map.
+3. Create strong seeds with `probability >= 0.8`.
+4. Propagate through `probability >= 0.25` or the non-background argmax anchor.
+5. Use full 3D connectivity for propagation.
+6. Apply anisotropic closing with `radius_z=3` and `radius_xy=2`.
+7. Remove connected components smaller than `250` voxels.
+8. Save the final mask as `uint8` TIFF and package it into `submission.zip`.
 
-The final call is not an ensemble: it uses `fold_all` from the supplied checkpoint. The helper functions can run other folds, but no fold blend is executed by the archived final cell.
+## Evaluation and Evidence
 
-### 3.5 What Did Not Work / Open Ablations
+The archived portfolio evidence records a **private leaderboard score of 0.58952**, Bronze Medal, rank 85 of 1,391 teams. The repository does not include a complete fold-wise CV or ablation ledger, so those values are not presented as if they existed.
 
-- `[TODO]` Compare `3d_fullres` with the code-documented `2d`, `3d_lowres`, and cascade configurations.
-- `[TODO]` Compare standard nnUNet planner against `nnUNetPlannerResEncM`.
-- `[TODO]` Quantify hysteresis thresholds, anisotropic closing, and component filtering separately.
-- `[TODO]` Add fold-0..4 ensemble results if they were used in the competition process.
+| Evidence | Record |
+| --- | --- |
+| Award | Bronze Medal |
+| Rank | 85 / 1,391 teams |
+| Private leaderboard | `0.58952` |
+| Final inference | Single `fold_all` checkpoint path |
+| Official certificate | `evidence/vesuvius-bronze-certificate.png` |
 
-## 4. Validation and Ablation Results
-
-The archived portfolio evidence records **Bronze Medal, rank 85/1,391, private leaderboard score 0.58952, awarded February 28, 2026**. The Notebook itself does not include a complete ablation ledger.
-
-| Stage / Experiment | Key Changes | Local CV | Public LB | Private LB |
-| :--- | :--- | :---: | :---: | :---: |
-| Baseline | nnUNet dataset conversion and default inference | `[TODO]` | `[TODO]` | `[TODO]` |
-| Full-resolution model | `3d_fullres` + `nnUNetPlannerResEncM` | `[TODO]` | `[TODO]` | `[TODO]` |
-| External checkpoint path | `nnUNetTrainer_2000epochs`, `fold_all`, `checkpoint_best.pth` | N/A | `[TODO]` | `0.58952 (archived record)` |
-| Final mask refinement | Hysteresis + closing + small-component removal | `[TODO]` | `[TODO]` | `[TODO]` |
-
-## 5. Repository Structure
+## Repository Structure
 
 ```text
 .
 ├── assets/
-│   └── certificate.png                         # README Hero certificate image
+│   └── certificate.png                         # README hero image
 ├── evidence/
 │   ├── links.md                                # Official Kaggle links
 │   └── vesuvius-bronze-certificate.png        # Archived certificate image
 ├── submission/
 │   └── fork-of-surface-nnunet-training-inference-p.ipynb
-│                                                  # Downloaded Kaggle Notebook
-├── README.md                                    # English technical documentation
-└── README_zh.md                                 # Simplified Chinese technical documentation
+│                                                  # Downloaded Kaggle notebook
+├── README.md                                    # English documentation
+└── README_zh.md                                 # Simplified Chinese documentation
 ```
 
-## 6. Environment and Reproducibility
+## Reproducibility
 
-### 6.1 Hardware and Runtime
-
-- Notebook metadata declares an NVIDIA Tesla T4 runtime and Python 3.11.13.
-- The code dynamically detects available CUDA GPUs and can add `-num_gpus N` when more than one GPU is visible.
-- The final archived invocation uses an external 2,000-epoch checkpoint and skips training.
-- `[TODO: record exact GPU count, VRAM, preprocessing duration, inference duration, and ZIP size]`.
-
-### 6.2 Installation
-
-The Notebook installs from Kaggle's offline package directory:
-
-```bash
-pip install nnunetv2 nibabel tifffile tqdm \
-  --no-index -f /kaggle/input/surface-packages-offline
-```
-
-It also imports `numpy`, `pandas`, `matplotlib`, `scipy`, `scikit-image`, and `tifffile`.
-
-### 6.3 Data Preparation
+### Kaggle inputs
 
 Mount the competition data at:
 
@@ -185,15 +130,13 @@ Mount the competition data at:
 └── test_images/*.tif
 ```
 
-An optional prepared preprocessing dataset may be mounted at:
+Optional prepared preprocessing artifacts:
 
 ```text
 /kaggle/input/vesuvius-surface-nnunet-preprocessed
 ```
 
-### 6.4 Training, Inference, and Submission Commands
-
-The Notebook exposes Python wrappers around the real nnUNet commands:
+### Training and inference wrappers
 
 ```python
 setup_environment()
@@ -212,7 +155,7 @@ run_training(
 )
 ```
 
-For the archived final path, use the external checkpoint exactly as the final cell does:
+For the archived final path, use the prepared checkpoint and skip preprocessing/training:
 
 ```python
 full_pipeline(
@@ -228,14 +171,10 @@ full_pipeline(
 generate_submission()
 ```
 
-The generated artifact is `/kaggle/working/submission.zip`. By default, `generate_submission()` deletes the intermediate TIFF files after adding them to the ZIP.
-
-### 6.5 Reproducibility Boundaries
-
-The archive excludes the large competition volumes, preprocessed arrays, nnUNet checkpoints, and generated ZIP. Reproduction requires the original Kaggle datasets, the prepared checkpoint or a full training run, compatible nnUNet versions, and sufficient local storage for 3D preprocessing.
+The generated artifact is `/kaggle/working/submission.zip`. The archive excludes the original volumes, prepared arrays, checkpoints, and generated ZIP, so reproducing the full run requires the original Kaggle inputs and sufficient storage for 3D preprocessing.
 
 ## Official Links
 
 - [Competition](https://www.kaggle.com/competitions/vesuvius-challenge-surface-detection)
-- [Kaggle Notebook, script version 300492446](https://www.kaggle.com/code/ydhdhej/fork-of-surface-nnunet-training-inference-p?scriptVersionId=300492446)
+- [Kaggle notebook, script version 300492446](https://www.kaggle.com/code/ydhdhej/fork-of-surface-nnunet-training-inference-p?scriptVersionId=300492446)
 - [Official certificate image](https://storage.googleapis.com/kaggle-competition-certificates/31156518/532b9eb8ee7083b247b4da26621806d6.png)
